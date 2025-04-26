@@ -1,0 +1,168 @@
+TASK3: SQL DATA ANALYSIS
+E_COMMERCE DATAABSE
+
+STEP1: create database
+
+CREATE DATABASE ecommerce_db;
+
+
+STEP2: CREATE TABLE
+CREATE TABLE customers (
+    customer_id INT PRIMARY KEY,
+    name VARCHAR(100),
+    email VARCHAR(100),
+    country VARCHAR(50)
+);
+
+CREATE TABLE products (
+    product_id INT PRIMARY KEY,
+    name VARCHAR(100),
+    category VARCHAR(50),
+    price DECIMAL(10,2)
+);
+
+CREATE TABLE orders (
+    order_id INT PRIMARY KEY,
+    customer_id INT,
+    order_date DATE,
+    total_amount DECIMAL(10,2),
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+);
+
+CREATE TABLE order_items (
+    order_item_id INT PRIMARY KEY,
+    order_id INT,
+    product_id INT,
+    quantity INT,
+    price DECIMAL(10,2),
+    FOREIGN KEY (order_id) REFERENCES orders(order_id),
+    FOREIGN KEY (product_id) REFERENCES products(product_id)
+);
+
+
+
+STEP3: INSERT 10 VALUES
+
+INSERT INTO customers VALUES
+(1, 'Alice', 'alice@example.com', 'USA'),
+(2, 'Bob', 'bob@example.com', 'India'),
+(3, 'Carlos', 'carlos@example.com', 'Brazil'),
+(4, 'Diana', 'diana@example.com', 'Germany'),
+(5, 'Eva', 'eva@example.com', 'India'),
+(6, 'Frank', 'frank@example.com', 'UK'),
+(7, 'Grace', 'grace@example.com', 'USA'),
+(8, 'Henry', 'henry@example.com', 'Canada'),
+(9, 'Ivy', 'ivy@example.com', 'India'),
+(10, 'Jack', 'jack@example.com', 'USA');
+INSERT INTO products VALUES
+(101, 'Laptop', 'Electronics', 600.00),
+(102, 'Phone', 'Electronics', 300.00),
+(103, 'Tablet', 'Electronics', 200.00),
+(104, 'Monitor', 'Electronics', 150.00),
+(105, 'Keyboard', 'Accessories', 20.00),
+(106, 'Mouse', 'Accessories', 15.00),
+(107, 'Desk', 'Furniture', 120.00),
+(108, 'Chair', 'Furniture', 80.00),
+(109, 'Notebook', 'Stationery', 5.00),
+(110, 'Pen', 'Stationery', 1.00);
+INSERT INTO orders VALUES
+(201, 1, '2024-03-01', 920.00),
+(202, 2, '2024-03-05', 320.00),
+(203, 3, '2024-03-10', 135.00),
+(204, 1, '2024-03-12', 30.00),
+(205, 5, '2024-03-14', 100.00),
+(206, 6, '2024-03-15', 240.00),
+(207, 4, '2024-03-18', 600.00),
+(208, 8, '2024-03-20', 60.00),
+(209, 9, '2024-03-22', 15.00),
+(210, 10, '2024-03-25', 150.00);
+
+
+STEP4:Use SELECT, WHERE, ORDER BY, GROUP BY
+
+-- All customers from India, ordered by name
+SELECT * FROM customers 
+WHERE country = 'India' 
+ORDER BY name;
+
+-- Count of customers per country
+SELECT country, COUNT(*) AS total_customers 
+FROM customers 
+GROUP BY country;
+
+
+
+
+STEP5:Use JOINS (INNER, LEFT, RIGHT)
+
+-- INNER JOIN: Orders with customer details
+SELECT o.order_id, c.name, o.total_amount 
+FROM orders o
+INNER JOIN customers c ON o.customer_id = c.customer_id;
+
+-- LEFT JOIN: All customers and any orders (if available)
+SELECT c.name, o.order_id 
+FROM customers c
+LEFT JOIN orders o ON c.customer_id = o.customer_id;
+
+-- RIGHT JOIN: All orders with customer name (simulate RIGHT JOIN with LEFT JOIN and table switch in MySQL)
+SELECT o.order_id, c.name 
+FROM orders o
+RIGHT JOIN customers c ON o.customer_id = c.customer_id;
+
+
+
+STEP6:Write subqueries
+
+-- Customers who placed orders above the average total amount
+SELECT name 
+FROM customers 
+WHERE customer_id IN (
+    SELECT customer_id 
+    FROM orders 
+    WHERE total_amount > (
+        SELECT AVG(total_amount) FROM orders
+    )
+);
+
+
+
+
+STEP7:.Use aggregate functions (SUM, AVG)
+
+-- Total and average sales amount
+SELECT SUM(total_amount) AS total_sales, AVG(total_amount) AS average_order 
+FROM orders;
+
+-- Total quantity of each product sold
+SELECT p.name, SUM(oi.quantity) AS total_quantity 
+FROM order_items oi
+JOIN products p ON oi.product_id = p.product_id 
+GROUP BY p.name;
+
+
+
+
+
+STEP8:Create views for analysis
+
+-- View: Top 5 spending customers
+CREATE VIEW top_5_customers AS
+SELECT c.name, SUM(o.total_amount) AS total_spent 
+FROM customers c 
+JOIN orders o ON c.customer_id = o.customer_id 
+GROUP BY c.customer_id 
+ORDER BY total_spent DESC 
+LIMIT 5;
+
+
+
+
+
+STEP9:.Optimize queries with indexes
+
+-- Index to optimize frequent filtering by country
+CREATE INDEX idx_customers_country ON customers(country);
+
+-- Index on orders for quick total_amount queries
+CREATE INDEX idx_orders_total_amount ON orders(total_amount);
